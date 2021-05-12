@@ -4,7 +4,7 @@
  * @Email:  daniel.murrieta-alvarez@alumni.fh-aachen.de
  * @Filename: main.cpp
  * @Last modified by:   daniel
- * @Last modified time: 2021-05-08T01:48:19+02:00
+ * @Last modified time: 2021-05-12T00:21:53+02:00
  * @License: CC by-sa
  */
 
@@ -33,14 +33,15 @@ const char* htmlFile = "/index.html";
 const char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
 const char *password = "62407078731195560963";
 int count = 0;
-
+String cadena;
+uint8_t contador=10;
 //ESP8266WebServer server(80);// Linea original
 WebServer server(80);
 
 void handleRoot()
 {
   server.sendHeader("Location", "/index.html", true);
-  server.send(302, "text/plane", "");
+  server.send(302, "text/plane", "Hola Hola Hola");
 }
 
 
@@ -57,8 +58,8 @@ bool loadFromSpiffs(String path)
   else if(path.endsWith(".html"))
     dataType = "text/html";
 
-  else if(path.endsWith(".htm"))
-    dataType = "text/html";
+  // else if(path.endsWith(".htm"))
+  //   dataType = "text/html";
 
   else if(path.endsWith(".css"))
     dataType = "text/css";
@@ -66,26 +67,26 @@ bool loadFromSpiffs(String path)
   else if(path.endsWith(".js"))
     dataType = "application/javascript";
 
-  else if(path.endsWith(".png"))
-    dataType = "image/png";
-
-  else if(path.endsWith(".gif"))
-    dataType = "image/gif";
-
-  else if(path.endsWith(".jpg"))
-    dataType = "image/jpeg";
-
-  else if(path.endsWith(".ico"))
-    dataType = "image/x-icon";
-
-  else if(path.endsWith(".xml"))
-    dataType = "text/xml";
-
-  else if(path.endsWith(".pdf"))
-    dataType = "application/pdf";
-
-  else if(path.endsWith(".zip"))
-    dataType = "application/zip";
+  // else if(path.endsWith(".png"))
+  //   dataType = "image/png";
+  //
+  // else if(path.endsWith(".gif"))
+  //   dataType = "image/gif";
+  //
+  // else if(path.endsWith(".jpg"))
+  //   dataType = "image/jpeg";
+  //
+  // else if(path.endsWith(".ico"))
+  //   dataType = "image/x-icon";
+  //
+  // else if(path.endsWith(".xml"))
+  //   dataType = "text/xml";
+  //
+  // else if(path.endsWith(".pdf"))
+  //   dataType = "application/pdf";
+  //
+  // else if(path.endsWith(".zip"))
+  //   dataType = "application/zip";
 
   File dataFile = SPIFFS.open(path.c_str(), "r");
   if(server.hasArg("download"))
@@ -150,13 +151,24 @@ void setup() {
 
 
   server.on("/", handleRoot);
+  server.on("/temperature",HTTP_GET,[](){
+    server.send(200, "text/json", cadena);
+  });
   server.onNotFound(handleWebRequests);
   server.begin();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  if (millis()%1000==0)
+    {
+      contador++;
+      cadena = String(contador);
+    }
+
   server.handleClient();
+
 }
 
 

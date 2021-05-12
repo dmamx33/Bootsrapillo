@@ -1,20 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Bootstrap Example</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-</head>
-<body>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <script src="https://code.highcharts.com/highcharts.js"></script>
 
-<div class="container">
-  <h2>List Group With Contextual Classes</h2>
-  <ul class="list-group">
-    <li class="list-group-item list-group-item-success">First item</li>
-    <li class="list-group-item list-group-item-info">Second item</li>
-    <li class="list-group-item list-group-item-warning">Third item</li>
-    <li class="list-group-item list-group-item-danger">Fourth item</li>
-  </ul>
+</head>
+
+<body>
+  <div class="container">
+    <div class="jumbotron">
+      <h1>Ciudades chingonas</h1>
+      <p>Personal Weather station for well-being based on sensor Bosch BME680</p>
+    </div>
+    <p>This is some text.</p>
+  </div>
+  <div class="container">
+    <h2>Carousel Example</h2>
+    <div id="myCarousel" class="carousel slide" data-ride="carousel">
+      <!-- Indicators -->
+      <ol class="carousel-indicators">
+        <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+        <li data-target="#myCarousel" data-slide-to="1"></li>
+        <li data-target="#myCarousel" data-slide-to="2"></li>
+        <li data-target="#myCarousel" data-slide-to="3"></li>
+
+      </ol>
+
+      <!-- Wrapper for slides -->
+      <div class="carousel-inner">
+
+        <div class="item active">
+          <img src="https://cdn.pixabay.com/photo/2020/04/22/16/05/los-angeles-5078872__340.jpg" alt="Los Angeles" style="width:100%;">
+          <div class="carousel-caption">
+            <h3>Los Angeles</h3>
+            <p>LA is always so much fun!</p>
+          </div>
+        </div>
+
+        <div class="item">
+          <img src="https://www.urban-hub.com/wp/wp-content/uploads/2020/03/Chicago_City_Keyvisual_Teaser.jpg" alt="Chicago" style="width:100%;">
+          <div class="carousel-caption">
+            <h3>Chicago</h3>
+            <p>Thank you, Chicago!</p>
+          </div>
+        </div>
+
+        <div class="item">
+          <img src="https://newsdigitaltv.com/wp-content/uploads/2021/04/manza.jpg" alt="New York" style="width:100%;">
+          <div class="carousel-caption">
+            <h3>New York</h3>
+            <p>We love the Big Apple!</p>
+          </div>
+        </div>
+
+<!-- item de prueba -->
+        <div class="item">
+          <!-- <img src="https://newsdigitaltv.com/wp-content/uploads/2021/04/manza.jpg" alt="New York" style="width:100%;"> -->
+            <div id="chart-temperature" class="container"></div><br>
+          <div class="carousel-caption">
+            <h3>Temperature</h3>
+            <!-- <p>We love the Big Apple!</p> -->
+          </div>
+        </div>
+<!-- /////////////////////// -->
+      </div>
+
+      <!-- Left and right controls -->
+      <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="right carousel-control" href="#myCarousel" data-slide="next">
+        <span class="glyphicon glyphicon-chevron-right"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div>
+  </div>
+
+
+  <script src="jquery.min.js"></script>
+  <script src="bootstrap.min.js"></script>
+</body>
+
+<!-- script temperature -->
+<script>
+var chartT = new Highcharts.Chart({
+    chart: { renderTo: 'chart-temperature',
+             backgroundColor: '#FCFFC5'  },
+    title: { text: 'BME680 Temperature Chart' },
+    series: [{
+        showInLegend: false,
+        data: []
+    }],
+    plotOptions: {
+        line: {
+            animation: false,
+            dataLabels: { enabled: true }
+        },
+        series: { color: '#059e8a' }
+    },
+    xAxis: {
+        type: 'datetime',
+        dateTimeLabelFormats: { second: '%H:%M:%S' }
+    },
+    yAxis: {
+        title: { text: 'Temperature in Celsius' }
+    },
+    credits: { enabled: false }
+});
+setInterval(function () {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            var x = (new Date()).getTime(),
+                y = parseFloat(this.responseText);
+
+            if (chartT.series[0].data.length > 40) {
+                chartT.series[0].addPoint([x, y], true, true, true);
+            } else {
+                chartT.series[0].addPoint([x, y], true, false, true);
+            }
+        }
+    };
+    xhttp.open("GET", "/temperature", true);
+    xhttp.send();
+}, 2000);
+</script>
+<!-- ********************* -->
+
+
+</html>
