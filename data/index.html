@@ -2,25 +2,53 @@
 <html lang="en">
 
 <head>
-  <title>Bootstrap Example</title>
+  <title>Weather Station</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="bootstrap.min.css">
   <script src="https://code.highcharts.com/highcharts.js"></script>
-
 </head>
+
+<!-- jumbotron "https://i.ibb.co/4N8XXjh/frame7.png" -->
 
 <body>
   <div class="container">
+    <style>
+  .jumbotron {
+    background: url("https://i.ibb.co/RH3ssCR/frame7.png");
+    height: 100%;
+    /* You must set a specified height */
+    background-position: left bottom; /* Center the image */
+    background-repeat: no-repeat;
+    /* Do not repeat the image */
+    background-size: cover;
+  }
+
+  /* .jumbotron {
+    background-image: url(https://i.ibb.co/5jM9DC8/frame5.png);
+    background-size: cover;
+    height: 100%;} */
+</style>
     <div class="jumbotron">
-      <h1>Ciudades chingonas</h1>
-      <p>Personal Weather station for well-being based on sensor Bosch BME680</p>
+      <h1 class="text-right"> Weather Station</h1>
+      <h5 class="text-right">Personal weather station based on sensor Bosch BME680</h5>
     </div>
-    <p>This is some text.</p>
   </div>
+
+<div class="container">
+  <h2>Temperature:</h2>
+  <h3 id="temp"></h3>
+  <h2>Humidity:</h2>
+  <h3 id="hum"></h3>
+  <h2>Other thing:</h2>
+  <h3 id="pres"></h3>
+</div>
+  <!-- fin jumbotron   -->
+
+  <!-- Carousel -->
   <div class="container">
-    <h2>Carousel Example</h2>
-    <div id="myCarousel" class="carousel slide" data-ride="carousel">
+    <h4 class="text-center">Charts</h4>
+    <div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="false">
       <!-- Indicators -->
       <ol class="carousel-indicators">
         <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
@@ -57,27 +85,35 @@
           </div>
         </div>
 
-<!-- item de prueba -->
+        <!-- item de prueba -->
         <div class="item">
           <!-- <img src="https://newsdigitaltv.com/wp-content/uploads/2021/04/manza.jpg" alt="New York" style="width:100%;"> -->
-            <div id="chart-temperature" class="container"></div><br>
+          <div id="chart-temperature" class="container"></div><br>
           <div class="carousel-caption">
             <h3>Temperature</h3>
             <!-- <p>We love the Big Apple!</p> -->
           </div>
         </div>
-<!-- /////////////////////// -->
+        <!-- /////////////////////// -->
       </div>
 
       <!-- Left and right controls -->
       <a class="left carousel-control" href="#myCarousel" data-slide="prev">
-        <span class="glyphicon glyphicon-chevron-left"></span>
+  <span class="glyphicon glyphicon-arrow-left"></span>
+  <span class="sr-only">Previous</span>
+</a>
+<a class="right carousel-control" href="#myCarousel" data-slide="next">
+  <span class="glyphicon glyphicon-arrow-right"></span>
+  <span class="sr-only">Next</span>
+</a>
+      <!-- <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+        <span class="glyphicon glyphicon-backward"></span>
         <span class="sr-only">Previous</span>
       </a>
       <a class="right carousel-control" href="#myCarousel" data-slide="next">
-        <span class="glyphicon glyphicon-chevron-right"></span>
+        <span class="glyphicon glyphicon-forward"></span>
         <span class="sr-only">Next</span>
-      </a>
+      </a> -->
     </div>
   </div>
 
@@ -88,48 +124,87 @@
 
 <!-- script temperature -->
 <script>
-var chartT = new Highcharts.Chart({
-    chart: { renderTo: 'chart-temperature',
-             backgroundColor: '#FCFFC5'  },
-    title: { text: 'BME680 Temperature Chart' },
+  var chartT = new Highcharts.Chart({
+    chart: {
+      renderTo: 'chart-temperature',
+      backgroundColor: '#FCFFC5'
+    },
+    title: {
+      text: 'BME680 Temperature Chart'
+    },
     series: [{
-        showInLegend: false,
-        data: []
+      showInLegend: false,
+      data: []
     }],
     plotOptions: {
-        line: {
-            animation: false,
-            dataLabels: { enabled: true }
-        },
-        series: { color: '#059e8a' }
+      line: {
+        animation: true,
+        dataLabels: {
+          enabled: true
+        }
+      },
+      series: {
+        color: '#059e8a'
+      }
     },
     xAxis: {
-        type: 'datetime',
-        dateTimeLabelFormats: { second: '%H:%M:%S' }
+      type: 'datetime',
+      dateTimeLabelFormats: {
+        second: '%H:%M:%S'
+      }
     },
     yAxis: {
-        title: { text: 'Temperature in Celsius' }
+      title: {
+        text: 'Temperature in Celsius'
+      }
     },
-    credits: { enabled: false }
-});
-setInterval(function () {
+    credits: {
+      enabled: false
+    }
+  });
+  setInterval(function() {
     var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            var x = (new Date()).getTime(),
-                y = parseFloat(this.responseText);
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        var x = (new Date()).getTime(),
+          y = parseFloat(this.responseText);
 
-            if (chartT.series[0].data.length > 40) {
-                chartT.series[0].addPoint([x, y], true, true, true);
-            } else {
-                chartT.series[0].addPoint([x, y], true, false, true);
-            }
+        if (chartT.series[0].data.length > 40) {
+          chartT.series[0].addPoint([x, y], true, true, true);
+        } else {
+          chartT.series[0].addPoint([x, y], true, false, true);
         }
+      }
     };
     xhttp.open("GET", "/temperature", true);
     xhttp.send();
-}, 2000);
+  }, 2000);
 </script>
+<!-- **********Script reception data*********** -->
+<script>
+  function renew() {
+    fetch('/info').then(function(response) {
+      return response.json();
+    }).then(function(array) {
+      var elem = document.querySelector('#temp');
+      array[2] != 'nan' ? elem.innerHTML = array[0] + '°C' : elem.innerHTML = '---------';
+      elem = document.querySelector('#hum');
+      array[2] != 'nan' ? elem.innerHTML = array[1] + ' %' : elem.innerHTML = 'Fehler';
+      elem = document.querySelector('#pres');
+      array[2] != 'nan' ? elem.innerHTML = array[2] + ' hPa' : elem.innerHTML = '---------';
+    });
+  }
+  document.addEventListener('DOMContentLoaded', renew);
+  setInterval(renew, 1000)
+</script>
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
+<!-- ********************* -->
 <!-- ********************* -->
 
 

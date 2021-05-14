@@ -4,7 +4,7 @@
  * @Email:  daniel.murrieta-alvarez@alumni.fh-aachen.de
  * @Filename: main.cpp
  * @Last modified by:   daniel
- * @Last modified time: 2021-05-12T00:21:53+02:00
+ * @Last modified time: 2021-05-14T13:26:12+02:00
  * @License: CC by-sa
  */
 
@@ -33,7 +33,7 @@ const char* htmlFile = "/index.html";
 const char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
 const char *password = "62407078731195560963";
 int count = 0;
-String cadena;
+String cadena_envio;
 uint8_t contador=10;
 //ESP8266WebServer server(80);// Linea original
 WebServer server(80);
@@ -151,8 +151,11 @@ void setup() {
 
 
   server.on("/", handleRoot);
-  server.on("/temperature",HTTP_GET,[](){
-    server.send(200, "text/json", cadena);
+  server.on("/info", [](){
+    server.send(200, "application/json", cadena_envio);
+  });
+  server.on("/temperature", HTTP_GET,[](){
+    server.send(200, "text/json", String(contador));
   });
   server.onNotFound(handleWebRequests);
   server.begin();
@@ -164,7 +167,10 @@ void loop() {
   if (millis()%1000==0)
     {
       contador++;
-      cadena = String(contador);
+      //cadena_envio = String(contador)+"-"+String(contador*);
+      //return (String)"[\"" + temp + "\",\"" + hum + "\",\"" + sealevel + "\"]";
+      cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
+      Serial.println(cadena_envio);
     }
 
   server.handleClient();
