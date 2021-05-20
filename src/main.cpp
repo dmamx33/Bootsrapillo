@@ -4,7 +4,7 @@
  * @Email:  daniel.murrieta-alvarez@alumni.fh-aachen.de
  * @Filename: main.cpp
  * @Last modified by:   daniel
- * @Last modified time: 2021-05-14T13:26:12+02:00
+ * @Last modified time: 2021-05-20T00:57:58+02:00
  * @License: CC by-sa
  */
 
@@ -22,6 +22,8 @@
 // #include <AsyncTCP.h>
 //  #include <ESPAsyncWebServer.h>
 // #include <SPIFFSEditor.h>
+#include "WeatherStat_NTP.h"
+#include "WeatherStat_Messages.h"
 
 // #include <ESP8266WiFi.h> //Archivos originales
 // #include <ESP8266WebServer.h>
@@ -30,11 +32,17 @@
 const char* htmlFile = "/index.html";
 // const char* ssid = "NodeMCU";
 // const char* password = "xxxxxxxxxxx";
-const char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
-const char *password = "62407078731195560963";
+  char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
+  char *password = "62407078731195560963";
+//char *ssid = "FRITZ!Box 6591 Cable BE";          // replace with your SSID
+//char *password = "07225443701792235194";  // replace with your Password
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 3600;  //Germany is GMT +1, expressed in seconds
+const int daylightOffset_sec = 3600;
 int count = 0;
 String cadena_envio;
 uint8_t contador=10;
+int dummyco2, dummyiaq, dummybreathvoc;
 //ESP8266WebServer server(80);// Linea original
 WebServer server(80);
 
@@ -148,7 +156,7 @@ void setup() {
     // Print ESP32 Local IP Address
     Serial.println(WiFi.localIP());
     ////////////
-
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   server.on("/", handleRoot);
   server.on("/info", [](){
@@ -156,6 +164,15 @@ void setup() {
   });
   server.on("/temperature", HTTP_GET,[](){
     server.send(200, "text/json", String(contador));
+  });
+  server.on("/iaq", HTTP_GET,[](){
+    server.send(200, "text/json", String(dummyiaq));
+  });
+  server.on("/co2", HTTP_GET,[](){
+    server.send(200, "text/json", String(dummyco2));
+  });
+  server.on("/breathvoc_h", HTTP_GET,[](){
+    server.send(200, "text/json", String(dummybreathvoc));
   });
   server.onNotFound(handleWebRequests);
   server.begin();
@@ -169,16 +186,41 @@ void loop() {
       contador++;
       //cadena_envio = String(contador)+"-"+String(contador*);
       //return (String)"[\"" + temp + "\",\"" + hum + "\",\"" + sealevel + "\"]";
-      cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
+      // cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
+      cadena_envio = StartJS;//Initializer JSON chain
+      cadena_envio += String(contador) + SpacerJS;//temp
+      cadena_envio += String(contador*2) + SpacerJS;//pres
+      cadena_envio += String(contador*3) + SpacerJS;//hum
+      cadena_envio += getDatum(IN_LETTERS)+" "+ getZeit()+ SpacerJS ;//fecha
+      cadena_envio += messages_runin_stat[1] +SpacerJS;//status
+       dummyco2 = random(1,1000);
+      cadena_envio += String(dummyco2) + SpacerJS; //co2 mess
+      cadena_envio += String(dummyco2-random(10,50)) + SpacerJS; //co2 stimation
+      int dummyaccuracy = random(1,4);
+      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS; //co2 stimation accuracy
+      cadena_envio += "info o medidas a tomar" + SpacerJS; //co2 suggested acti
+       dummybreathvoc = random(1,200);
+      cadena_envio += String(dummybreathvoc) + SpacerJS;//breath VOC
+      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//breath VOC accuracy
+      cadena_envio += String(random(1,100)) + SpacerJS;//Gas percentage
+      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//Gas percentage accuracy
+       dummyiaq = random(0,500);
+      cadena_envio += String(dummyiaq)+ SpacerJS;//IAQ
+      cadena_envio += messages_accuracy[dummyaccuracy]+ SpacerJS;//IAQ Accuracy
+      cadena_envio += messages_impact[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Impact
+      cadena_envio += messages_saction[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Suggested actions
+      cadena_envio += messages_iaqcolors[iaq_Index2Level(dummyiaq)]+ SpacerJS;
+      //cadena_envio += "whatsgoingon" + SpacerJS;
+      cadena_envio += messages_quality[iaq_Index2Level(dummyiaq)];//+ SpacerJS;
+      // cadena_envio += "oh_no_me_da_amsiedad";
+      cadena_envio += StopJS;//Finalizer JSON chain
+      //long sdf=random(1,500);
       Serial.println(cadena_envio);
     }
 
   server.handleClient();
 
 }
-
-
-
 
 
 // #define RELAY_ADDR 0x6D
