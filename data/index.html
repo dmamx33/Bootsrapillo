@@ -178,8 +178,8 @@
       <div class="card-deck">
         <div class="card text-center border-dark mt-3 mb-3" style="min-width: 22rem;">
           <!-- <div class="card-header text-white bg-dark"> -->
-          <div class="card-header text-white" style="background-color: #00AA9E ;">
-            <h2> <small>Air Quality Index</small></h2>
+          <div id="dynamic_header" class="card-header text-white" style="background-color: #00AA9E ;">
+            <h2 id="dynamic_text"> <small>Air Quality Index</small></h2>
           </div>
           <div class="card-body text-dark">
             <h2 class="card-title" id="iaq_number">xxx</h2>
@@ -455,12 +455,10 @@
         margin-bottom: 0;
         padding-bottom: 0
       }
-
       .bold-text {
         /* color: #989c9e !important */
         color: #D1E8E3 !important
       }
-
     </style>
 
     <footer>
@@ -502,12 +500,7 @@
       </div>
     </footer>
   </div>
-
-
   <!-- Termina footer -->
-
-
-
 
   <!-- scripts -->
   <script src="jquery.min.js"></script>
@@ -786,7 +779,7 @@
     fetch('/info').then(function(response) {
       return response.json();
     }).then(function(array) {
-      console.log(array);
+      //console.log(array);
       var elem = document.querySelector('#temp');
       array[2] != 'nan' ? elem.innerHTML = array[0] + '°C' : elem.innerHTML = '---------';
       elem = document.querySelector('#hum');
@@ -823,6 +816,13 @@
       array[2] != 'nan' ? elem.innerHTML = array[16] : elem.innerHTML = '---------';
       elem = document.querySelector('#iaq_color');
       array[2] != 'nan' ? elem.innerHTML = array[17] : elem.innerHTML = '---------';
+        dynamic_header.style.backgroundColor = array[17];
+        if (array[17] == "#FEFB3B" || array[17] == "#80E335" ){
+          dynamic_text.style.color = "black"
+        }
+        else {
+          dynamic_text.style.color = "white"
+        }
       elem = document.querySelector('#iaq_quality');
       array[2] != 'nan' ? elem.innerHTML = array[18] : elem.innerHTML = '---------';
       // elem = document.querySelector('#textdummy');
