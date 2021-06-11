@@ -1,0 +1,34 @@
+
+
+body
+{
+  font-family: 'Roboto', sans-serif;
+  /*overflow: hidden;*/
+  /*background: #d22222;;*/
+}
+
+
+
+
+
+div.date
+{
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(0,0,0,0.5);
+}
+
+div.forecast
+{
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+
+  color: rgba(0,0,0,0.7);
+}
+
+div.temp
+{
+  font-size: 45px;
+}

@@ -32,10 +32,10 @@
 const char* htmlFile = "/index.html";
 // const char* ssid = "NodeMCU";
 // const char* password = "xxxxxxxxxxx";
-  char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
-  char *password = "62407078731195560963";
-//char *ssid = "FRITZ!Box 6591 Cable BE";          // replace with your SSID
-//char *password = "07225443701792235194";  // replace with your Password
+//  char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
+//  char *password = "62407078731195560963";
+char *ssid = "FRITZ!Box 6591 Cable BE";          // replace with your SSID
+char *password = "07225443701792235194";  // replace with your Password
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600;  //Germany is GMT +1, expressed in seconds
 const int daylightOffset_sec = 3600;

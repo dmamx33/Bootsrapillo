@@ -6,6 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="blanqui.css">
   <script src="https://code.highcharts.com/highcharts.js"></script>
 </head>
 
@@ -131,6 +132,12 @@
 
   </div>
 
+
+
+
+
+
+
   <!-- ALERT BAR END -->
 
   <!-- QUITAR, EN LO QUE DESCUBRO COMO CAMBIAR EL COLOR -->
@@ -139,16 +146,39 @@
 
   <div class="container">
     <div class="col d-flex justify-content-center">
+
+<div class="card-columns mx-auto d-flex justify-content-center col-8">
+
+
+
       <div class="card-columns">
+
 
         <div class="card text-center border-dark mt-3 mb-3" style="max-width: 18rem;">
           <div class="card-header text-white bg-dark">
-            <h2> <small>Temperature</small></h2>
+            <h2> <small>Forecast</small></h2>
           </div>
+
           <div class="card-body text-dark">
-            <h2 class="card-title" id="temp"></h2>
+            <div class="forecast">
+                Next 12H: Cloudy
+            </div>
+            <div class="temp">
+               <img src="https://s5.postimg.cc/yzcm7htyb/image.png" alt="" width="40">
+               <h2 id="temp">
+            </div>
+            <img src="aachen.png" alt="" width="120">
+            <!-- <h2 class="card-title" id="forecast"></h2> original -->
+            <h2 class="card-title"></h2>
+
+                    </div>
           </div>
-        </div>
+
+
+
+
+
+
 
         <div class="card text-center border-dark mt-3 mb-3" style="max-width: 18rem;">
           <div class="card-header text-white bg-dark">
@@ -159,6 +189,8 @@
           </div>
         </div>
 
+
+
         <div class="card text-center border-dark mt-3 mb-3" style="max-width: 18rem;">
           <div class="card-header text-white bg-dark">
             <h2> <small>Rel. Humidity</small></h2>
@@ -167,9 +199,12 @@
             <h2 class="card-title" id="hum"></h2>
           </div>
         </div>
+
+</div>
+</div>
       </div>
     </div>
-  </div>
+
 
 
   <!-- tarjetas de iaq y co2 -->
@@ -275,17 +310,23 @@
           </div>
         </div>
 
+
+        <!-- Empieza tarjeta de porcentaje de gas -->
         <div class="card text-center border-dark mt-3 mb-3" style="min-width: 20rem;">
           <div class="card-header text-white bg-dark">
             <h2> <small>Gas percentage</small></h2>
           </div>
-          <div class="card-body text-dark">
+          <div class="card-body">
             <h2 class="card-title" id="gaspercent">xxx</h2>
+            <!-- <p id="gaspercent"></p> -->
+            <!-- -- start radial progresss -- -->
+            <!-- -- end radial progresss -- -->
             <p><small class="text-muted" id="gaspercent_accuracy">xxx</small></p>
 
             <a href="#" class="card-link" data-toggle="modal" data-target="#myModalgas">Info</a>
           </div>
         </div>
+        <!-- termina tarjeta de porcentaje de gas -->
       </div>
     </div>
   </div>
@@ -455,6 +496,7 @@
         margin-bottom: 0;
         padding-bottom: 0
       }
+
       .bold-text {
         /* color: #989c9e !important */
         color: #D1E8E3 !important
@@ -473,14 +515,14 @@
               <!-- <h6 class="mb-3 mb-lg-4 bold-text "><b>Menu</b></h6>
               <ul class="list-unstyled">
                 <!-- <a class="nav-link" href="#gotocharts">Charts</a> -->
-                <!-- <li href="#webhome">Home</li>
+              <!-- <li href="#webhome">Home</li>
                 <li href="#gotocharts">Charts</li>
                 <li>About sensors</li>
               </ul> -->
             </div>
             <div class="col-xl-2 col-md-4 col-sm-4 col-12">
               <h6 class="mb-3 mb-lg-4 text-muted bold-text mt-sm-0 mt-5"><b>Address</b></h6>
-              <p class="mb-1">Goethestraße 1   52064</p>
+              <p class="mb-1">Goethestraße 1 52064</p>
               <p>Aachen, DE</p>
             </div>
           </div>
@@ -589,7 +631,7 @@
     };
     xhttp.open("GET", "/temperature", true);
     xhttp.send();
-  }, 2000);
+  }, 3000);
 </script>
 
 
@@ -650,7 +692,7 @@
     };
     xhttp.open("GET", "/iaq", true);
     xhttp.send();
-  }, 2000);
+  }, 3000);
 </script>
 <!-- ********** end script second chart *********** -->
 
@@ -711,7 +753,7 @@
     };
     xhttp.open("GET", "/co2", true); //handler
     xhttp.send();
-  }, 2000);
+  }, 3000);
 </script>
 <!-- ***********end script third chart********** -->
 
@@ -770,7 +812,7 @@
     };
     xhttp.open("GET", "/breathvoc_h", true);
     xhttp.send();
-  }, 2000);
+  }, 3000);
 </script>
 <!-- ***********end script fourth chart********** -->
 <!-- ********** starts Script reception data*********** -->
@@ -782,10 +824,10 @@
       //console.log(array);
       var elem = document.querySelector('#temp');
       array[2] != 'nan' ? elem.innerHTML = array[0] + '°C' : elem.innerHTML = '---------';
-      elem = document.querySelector('#hum');
-      array[2] != 'nan' ? elem.innerHTML = array[1] + ' %' : elem.innerHTML = 'Fehler';
       elem = document.querySelector('#pres');
-      array[2] != 'nan' ? elem.innerHTML = array[2] + ' hPa' : elem.innerHTML = '---------';
+      array[2] != 'nan' ? elem.innerHTML = array[1] + ' hPa' : elem.innerHTML = 'Fehler';
+      elem = document.querySelector('#hum');
+      array[2] != 'nan' ? elem.innerHTML = array[2] + ' %' : elem.innerHTML = '---------';
       elem = document.querySelector('#hora');
       array[2] != 'nan' ? elem.innerHTML = array[3] : elem.innerHTML = '---------';
       elem = document.querySelector('#text_status');
@@ -816,13 +858,12 @@
       array[2] != 'nan' ? elem.innerHTML = array[16] : elem.innerHTML = '---------';
       elem = document.querySelector('#iaq_color');
       array[2] != 'nan' ? elem.innerHTML = array[17] : elem.innerHTML = '---------';
-        dynamic_header.style.backgroundColor = array[17];
-        if (array[17] == "#FEFB3B" || array[17] == "#80E335" ){
-          dynamic_text.style.color = "black"
-        }
-        else {
-          dynamic_text.style.color = "white"
-        }
+      dynamic_header.style.backgroundColor = array[17];
+      if (array[17] == "#FEFB3B" || array[17] == "#80E335") {
+        dynamic_text.style.color = "black"
+      } else {
+        dynamic_text.style.color = "white"
+      }
       elem = document.querySelector('#iaq_quality');
       array[2] != 'nan' ? elem.innerHTML = array[18] : elem.innerHTML = '---------';
       // elem = document.querySelector('#textdummy');
@@ -830,7 +871,7 @@
     });
   }
   document.addEventListener('DOMContentLoaded', renew);
-  setInterval(renew, 1000)
+  setInterval(renew, 3000)
 </script>
 <!-- ********** end Script reception data*********** -->
 <!-- ********************* -->
