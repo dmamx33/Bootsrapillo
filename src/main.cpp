@@ -12,8 +12,7 @@
 #include <Wire.h>
 // #include "SparkFun_Qwiic_Relay.h"
 // #include "ArduinoJson.h"
-//
-// #include <ArduinoOTA.h>
+#include <EEPROM.h>// #include <ArduinoOTA.h>
  #include <FS.h>
  #include <SPIFFS.h>
 // #include <ESPmDNS.h>
@@ -24,7 +23,9 @@
 // #include <SPIFFSEditor.h>
 #include "WeatherStat_NTP.h"
 #include "WeatherStat_Messages.h"
-
+#include "WeatherStat_CO2sensor.h"
+#include "WeatherStat_Memory.h"
+#define BSEC_MAX_STATE_BLOB_SIZE     (139)
 // #include <ESP8266WiFi.h> //Archivos originales
 // #include <ESP8266WebServer.h>
 // #include <FS.h>
@@ -32,10 +33,10 @@
 const char* htmlFile = "/index.html";
 // const char* ssid = "NodeMCU";
 // const char* password = "xxxxxxxxxxx";
-//  char *ssid = "FRITZ!Box 6591 Cable SW";         // replace with your SSID
-//  char *password = "62407078731195560963";
-char *ssid = "FRITZ!Box 6591 Cable BE";          // replace with your SSID
-char *password = "07225443701792235194";  // replace with your Password
+char *ssid = "FRITZ!Box 6591 Cable SW";           // replace with your SSID
+char *password = "62407078731195560963";
+//char *ssid = "FRITZ!Box 6591 Cable BE";          // replace with your SSID
+//char *password = "07225443701792235194";  // replace with your Password
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600;  //Germany is GMT +1, expressed in seconds
 const int daylightOffset_sec = 3600;
@@ -43,185 +44,225 @@ int count = 0;
 String cadena_envio;
 uint8_t contador=10;
 int dummyco2, dummyiaq, dummybreathvoc;
+volatile int i=0;
+volatile int minutes=0;
+float varCo2M=400.0;
 //ESP8266WebServer server(80);// Linea original
 WebServer server(80);
+TaskHandle_t Task2;
+TaskHandle_t Task1;
+void loop1(void *parameter);
+void loop2(void *parameter);
 
 void handleRoot()
 {
-  server.sendHeader("Location", "/index.html", true);
-  server.send(302, "text/plane", "Hola Hola Hola");
+        server.sendHeader("Location", "/index.html", true);
+        server.send(302, "text/plane", "Hola Hola Hola");
 }
 
 
 bool loadFromSpiffs(String path)
 {
-  String dataType = "text/plain";
+        String dataType = "text/plain";
 
-  if(path.endsWith("/"))
-    path += "index.htm";
+        if(path.endsWith("/"))
+                path += "index.htm";
 
-  if(path.endsWith(".src"))
-    path = path.substring(0, path.lastIndexOf("."));
+        if(path.endsWith(".src"))
+                path = path.substring(0, path.lastIndexOf("."));
 
-  else if(path.endsWith(".html"))
-    dataType = "text/html";
+        else if(path.endsWith(".html"))
+                dataType = "text/html";
 
-  // else if(path.endsWith(".htm"))
-  //   dataType = "text/html";
 
-  else if(path.endsWith(".css"))
-    dataType = "text/css";
+        else if(path.endsWith(".css"))
+                dataType = "text/css";
 
-  else if(path.endsWith(".js"))
-    dataType = "application/javascript";
+        else if(path.endsWith(".js"))
+                dataType = "application/javascript";
 
-  // else if(path.endsWith(".png"))
-  //   dataType = "image/png";
-  //
-  // else if(path.endsWith(".gif"))
-  //   dataType = "image/gif";
-  //
-  // else if(path.endsWith(".jpg"))
-  //   dataType = "image/jpeg";
-  //
-  // else if(path.endsWith(".ico"))
-  //   dataType = "image/x-icon";
-  //
-  // else if(path.endsWith(".xml"))
-  //   dataType = "text/xml";
-  //
-  // else if(path.endsWith(".pdf"))
-  //   dataType = "application/pdf";
-  //
-  // else if(path.endsWith(".zip"))
-  //   dataType = "application/zip";
 
-  File dataFile = SPIFFS.open(path.c_str(), "r");
-  if(server.hasArg("download"))
-    dataType = "application/octet-stream";
-  if(server.streamFile(dataFile, dataType) != dataFile.size())
-  {
 
-  }
+        File dataFile = SPIFFS.open(path.c_str(), "r");
+        if(server.hasArg("download"))
+                dataType = "application/octet-stream";
+        if(server.streamFile(dataFile, dataType) != dataFile.size())
+        {
 
-  dataFile.close();
-  return true;
+        }
+
+        dataFile.close();
+        return true;
 }
 
 
 
 void handleWebRequests()
 {
-  if(loadFromSpiffs(server.uri())) return;
+        if(loadFromSpiffs(server.uri())) return;
 
-  String message = "File not detected\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET)?"GET":"POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
+        String message = "File not detected\n\n";
+        message += "URI: ";
+        message += server.uri();
+        message += "\nMethod: ";
+        message += (server.method() == HTTP_GET)?"GET":"POST";
+        message += "\nArguments: ";
+        message += server.args();
+        message += "\n";
 
-  for(uint8_t i=0;i<server.args();i++)
-  {
-    message += " NAME:"+server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
-  }
+        for(uint8_t i=0; i<server.args(); i++)
+        {
+                message += " NAME:"+server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
+        }
 
-  server.send(404, "text/plain", message);
-  Serial.println(message);
+        server.send(404, "text/plain", message);
+        Serial.println(message);
 }
 
 void setup() {
-  // put your setup code here, to run once:
-  delay(1000);
-  Serial.begin(115200);
-  Serial.println();
+        // put your setup code here, to run once:
+        Serial.begin(115200);
+        EEPROM.begin(512);
+        //Serial.print("EEMPROM: ");
+        //Serial.println(EEPROM.length());
+        delay(1000);
 
-  SPIFFS.begin();
-  Serial.println("File system initialized");
-  //
-  // WiFi.mode(WIFI_AP);//Codigo original: apesta
-  // WiFi.begin(ssid, password);
-  //
-  // //WiFi.softAP(ssid);
-  // Serial.println("");
-  // Serial.println(WiFi.localIP());
-  WiFi.begin(ssid, password);//Apesta menos
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(1000);
-      Serial.println("Connecting to WiFi..");
-    }
+        pinMode(MHZ19_PWM_PIN, INPUT);
+        Serial.println();
 
-    // Print ESP32 Local IP Address
-    Serial.println(WiFi.localIP());
-    ////////////
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+        SPIFFS.begin();
+        Serial.println("File system initialized");
+        // SaveSSID(START_DATA_WIFI, ssid);
+        // SavePASSW(START_DATA_WIFI, password);
+        // ESP.restart();
+        //CleanMemoryWifi(START_DATA_WIFI);
+        char *ssid = RetrieveSSID(START_DATA_WIFI);
+        char *password = RetrievePASSW(START_DATA_WIFI);
+        if(ssid && password)
+        {
+          Serial.print("Red encontrada: ");
+          Serial.println(ssid);
+          Serial.print("Contraseña encontrada: ");
+          Serial.println(password);
+        }
+        else{
+          Serial.println("Contraseña o password no encontrado");
 
-  server.on("/", handleRoot);
-  server.on("/info", [](){
-    server.send(200, "application/json", cadena_envio);
-  });
-  server.on("/temperature", HTTP_GET,[](){
-    server.send(200, "text/json", String(contador));
-  });
-  server.on("/iaq", HTTP_GET,[](){
-    server.send(200, "text/json", String(dummyiaq));
-  });
-  server.on("/co2", HTTP_GET,[](){
-    server.send(200, "text/json", String(dummyco2));
-  });
-  server.on("/breathvoc_h", HTTP_GET,[](){
-    server.send(200, "text/json", String(dummybreathvoc));
-  });
-  server.onNotFound(handleWebRequests);
-  server.begin();
-}
+          ssid = (char*) calloc( strlen("FRITZ!Box 6591 Cable SW")+1,sizeof(char) );
+          strcpy(ssid,"FRITZ!Box 6591 Cable SW");           // replace with your SSID
+          password = (char*) calloc( strlen("62407078731195560963")+1,sizeof(char) );
+          strcpy(password, "62407078731195560963");
+        }
+        delay(3000);
+        WiFi.begin(ssid, password);//Apesta menos
+        int k = 0;
+        while (WiFi.status() != WL_CONNECTED) {
+                k++;
+                delay(1000);
+                Serial.println("Connecting to WiFi..");
+                if(k == 10)  ESP.restart();
+        }
+        free(ssid);
+        free(password);
+        // Print ESP32 Local IP Address
+        Serial.println(WiFi.localIP());
+        ////////////
+        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-void loop() {
-  // put your main code here, to run repeatedly:
+        server.on("/", handleRoot);
+        server.on("/info", [](){
+                server.send(200, "application/json", cadena_envio);
+        });
+        server.on("/temperature", HTTP_GET,[](){
+                server.send(200, "text/json", String(contador));
+        });
+        server.on("/iaq", HTTP_GET,[](){
+                server.send(200, "text/json", String(dummyiaq));
+        });
+        server.on("/co2", HTTP_GET,[](){
+                server.send(200, "text/json", String(varCo2M ));
+        });
+        server.on("/breathvoc_h", HTTP_GET,[](){
+                server.send(200, "text/json", String(dummybreathvoc));
+        });
+        server.onNotFound(handleWebRequests);
+        server.begin();
 
-  if (millis()%1000==0)
-    {
-      contador++;
-      //cadena_envio = String(contador)+"-"+String(contador*);
-      //return (String)"[\"" + temp + "\",\"" + hum + "\",\"" + sealevel + "\"]";
-      // cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
-      cadena_envio = StartJS;//Initializer JSON chain
-      cadena_envio += String(contador) + SpacerJS;//temp
-      cadena_envio += String(contador*2) + SpacerJS;//pres
-      cadena_envio += String(contador*3) + SpacerJS;//hum
-      cadena_envio += getDatum(IN_LETTERS)+" "+ getZeit()+ SpacerJS ;//fecha
-      cadena_envio += messages_runin_stat[1] +SpacerJS;//status
-       dummyco2 = random(1,1000);
-      cadena_envio += String(dummyco2) + SpacerJS; //co2 mess
-      cadena_envio += String(dummyco2-random(10,50)) + SpacerJS; //co2 stimation
-      int dummyaccuracy = random(1,4);
-      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS; //co2 stimation accuracy
-      cadena_envio += "info o medidas a tomar" + SpacerJS; //co2 suggested acti
-       dummybreathvoc = random(1,200);
-      cadena_envio += String(dummybreathvoc) + SpacerJS;//breath VOC
-      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//breath VOC accuracy
-      cadena_envio += String(random(1,100)) + SpacerJS;//Gas percentage
-      cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//Gas percentage accuracy
-       dummyiaq = random(0,500);
-      cadena_envio += String(dummyiaq)+ SpacerJS;//IAQ
-      cadena_envio += messages_accuracy[dummyaccuracy]+ SpacerJS;//IAQ Accuracy
-      cadena_envio += messages_impact[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Impact
-      cadena_envio += messages_saction[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Suggested actions
-      cadena_envio += messages_iaqcolors[iaq_Index2Level(dummyiaq)]+ SpacerJS;
-      //cadena_envio += "whatsgoingon" + SpacerJS;
-      cadena_envio += messages_quality[iaq_Index2Level(dummyiaq)];//+ SpacerJS;
-      // cadena_envio += "oh_no_me_da_amsiedad";
-      cadena_envio += StopJS;//Finalizer JSON chain
-      //long sdf=random(1,500);
-      Serial.println(cadena_envio);
-    }
-
-  server.handleClient();
+        xTaskCreatePinnedToCore(loop1,"Task_1",10000,NULL,2,&Task1,0);
+        delay(500);
+        xTaskCreatePinnedToCore(loop2,"Task_2",10000,NULL,1,&Task2,0);
+        delay(500);
 
 }
 
+void loop(){
+  i++;
+  if(i==60){
+    minutes++;
+    i=0;}
+  yield();
+  Serial.println("---in loop() Min:" + String(minutes));
+  vTaskDelay(1000);
+}
+
+void loop1(void *parameter) {
+        // put your main code here, to run repeatedly:
+        while(true) {
+                if (millis()%3000==0)
+                {
+                        contador++;
+                        //cadena_envio = String(contador)+"-"+String(contador*);
+                        //return (String)"[\"" + temp + "\",\"" + hum + "\",\"" + sealevel + "\"]";
+                        // cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
+                        cadena_envio = StartJS;//Initializer JSON chain
+                        cadena_envio += String(contador) + SpacerJS;//temp
+                        cadena_envio += String(contador*2) + SpacerJS;//pres
+                        cadena_envio += String(contador*3) + SpacerJS;//hum
+                        cadena_envio += getDatum(IN_LETTERS)+" "+ getZeit()+ SpacerJS;//fecha
+                        cadena_envio += messages_runin_stat[1] +SpacerJS;//status
+                        dummyco2 = random(1,1000);
+                        cadena_envio += String(varCo2M ) + SpacerJS; //co2 mess
+                        cadena_envio += String(dummyco2-random(10,50)) + SpacerJS; //co2 stimation
+                        int dummyaccuracy = random(1,4);
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS; //co2 stimation accuracy
+                        cadena_envio += "info o medidas a tomar" + SpacerJS; //co2 suggested acti
+                        dummybreathvoc = random(1,200);
+                        cadena_envio += String(dummybreathvoc) + SpacerJS;//breath VOC
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//breath VOC accuracy
+                        cadena_envio += String(random(1,100)) + SpacerJS;//Gas percentage
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//Gas percentage accuracy
+                        dummyiaq = random(0,500);
+                        cadena_envio += String(dummyiaq)+ SpacerJS;//IAQ
+                        cadena_envio += messages_accuracy[dummyaccuracy]+ SpacerJS;//IAQ Accuracy
+                        cadena_envio += messages_impact[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Impact
+                        cadena_envio += messages_saction[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Suggested actions
+                        cadena_envio += messages_iaqcolors[iaq_Index2Level(dummyiaq)]+ SpacerJS;
+                        //cadena_envio += "whatsgoingon" + SpacerJS;
+                        cadena_envio += messages_quality[iaq_Index2Level(dummyiaq)];//+ SpacerJS;
+                        // cadena_envio += "oh_no_me_da_amsiedad";
+                        cadena_envio += StopJS;//Finalizer JSON chain
+                        //long sdf=random(1,500);
+                        //Serial.println(cadena_envio);
+                }
+
+                server.handleClient();
+        }
+        vTaskDelay(10);
+}
+
+void loop2(void *parameter){
+
+while(true){
+    Serial.println("---in loop2 before measure");
+    yield();
+   varCo2M = get_CO2_measure();
+
+   Serial.print("---in loop2 after measure: ");
+   Serial.println(varCo2M);
+  vTaskDelay(5);
+  }
+
+}
 
 // #define RELAY_ADDR 0x6D
 // #define INCORR_PARAM 0xFF
@@ -581,3 +622,25 @@ void loop() {
 // void loop(){
 //         ArduinoOTA.handle();
 // }
+
+
+// else if(path.endsWith(".png"))
+//   dataType = "image/png";
+//
+// else if(path.endsWith(".gif"))
+//   dataType = "image/gif";
+//
+// else if(path.endsWith(".jpg"))
+//   dataType = "image/jpeg";
+//
+// else if(path.endsWith(".ico"))
+//   dataType = "image/x-icon";
+//
+// else if(path.endsWith(".xml"))
+//   dataType = "text/xml";
+//
+// else if(path.endsWith(".pdf"))
+//   dataType = "application/pdf";
+//
+// else if(path.endsWith(".zip"))
+//   dataType = "application/zip";
