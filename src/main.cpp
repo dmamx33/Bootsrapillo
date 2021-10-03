@@ -291,7 +291,7 @@ void loop5(void *parameter){
                 }
                 else sec++;
 
-                if(min==1) ///alle 10 Minuten diesen Code ausführen
+                if(min==1) ///cambiar aqui, poner 10 (minutos)
                 {
 
                         Serial.println("CICLO CADA 10 MINUTOS " + getZeit());
@@ -301,12 +301,13 @@ void loop5(void *parameter){
                         else
                                 monate = SavedMonth();
 
+                        Serial.println(" Presion actual falsa: "+String(presion));
                         PushPressure(presion);//mete la presion actual en la fila
 
                         if(ForecastReady())// ya se guardaron 10 presiones?
                         {
-                                Serial.println("<<<< Forecast ready");
-                                Serial.print(String(GetNumbePress())+" - ");
+                                Serial.println("    <<<< Forecast ready");
+                                Serial.print("    "+String(GetNumbePress())+" - ");
                                 GetSavedPressures(Presiones);
                                 for (uint8_t i = 0; i < 10; i++) {
                                         Serial.print(String(Presiones[i])+" ");
@@ -318,8 +319,8 @@ void loop5(void *parameter){
                         }
                         else// no se han guardado 10 presiones...
                         {
-                                Serial.println("<<<< " + String(weather_forecast[26]) );
-                                Serial.print(String(GetNumbePress())+" - ");
+                                Serial.println("   <<<< " + String(weather_forecast[26]) );
+                                Serial.print("    "+String(GetNumbePress())+" - ");
                                 GetSavedPressures(Presiones);
                                 for (uint8_t i = 0; i < 10; i++) {
                                         Serial.print(String(Presiones[i])+" ");
@@ -331,6 +332,7 @@ void loop5(void *parameter){
                         presion++;//solo aumenta el valor de la presion a lo pendejo
 
                         min = 0;//resetea el timer!
+                        Serial.println(" ");
                 }
                 vTaskDelay(1000);//aguanta 1 segundo we
         }
