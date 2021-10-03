@@ -293,28 +293,17 @@ void loop5(void *parameter){
 
                 if(min==1) ///alle 10 Minuten diesen Code ausführen
                 {
-                        //GETTING ZAMBRETTI LETTER/NUMBER
-                        // int Zamb=0;
-                        // int month=12;// MAGIC NUMBER WE NEED TO GET REAL MONTH
-                        // Zamb=calc_zambretti((P010+P09+P08)/3,(P03+P02+P01)/3, month); // Aprox average of last measurement in 30 min, and 90-120 ago.
-                        // Serial.println(Zamb);//DEBUG
+
                         Serial.println("CICLO CADA 10 MINUTOS " + getZeit());
 
-                        if(Network_status==CONNECTED_TO_INTERNET)
+                        if(Network_status==CONNECTED_TO_INTERNET)//lee el mes ya sea de internet o memoria
                                 monate = getMonat();
                         else
                                 monate = SavedMonth();
 
-                                // Serial.println(" Initial array:");
-                                // GetSavedPressures(Presiones);
-                                // for (uint8_t i = 0; i < 10; i++) {
-                                //         Serial.print(String(Presiones[i])+" ");
-                                // }
-                                // Serial.println(" ");
+                        PushPressure(presion);//mete la presion actual en la fila
 
-                        PushPressure(presion);
-
-                        if(ForecastReady())
+                        if(ForecastReady())// ya se guardaron 10 presiones?
                         {
                                 Serial.println("<<<< Forecast ready");
                                 Serial.print(String(GetNumbePress())+" - ");
@@ -323,11 +312,13 @@ void loop5(void *parameter){
                                         Serial.print(String(Presiones[i])+" ");
                                 }
                                 Serial.println(" ");
+                                // Zamb=calc_zambretti((P010+P09+P08)/3,(P03+P02+P01)/3, month); // Aprox average of last measurement in 30 min, and 90-120 ago.
+
 
                         }
-                        else
+                        else// no se han guardado 10 presiones...
                         {
-                                Serial.println("<<<< Forecast not ready");
+                                Serial.println("<<<< " + String(weather_forecast[26]) );
                                 Serial.print(String(GetNumbePress())+" - ");
                                 GetSavedPressures(Presiones);
                                 for (uint8_t i = 0; i < 10; i++) {
@@ -335,14 +326,13 @@ void loop5(void *parameter){
                                 }
                                 Serial.println(" ");
                         }
-                        //Zamb=calc_zambretti((P010+P09+P08)/3,(P03+P02+P01)/3, monate);
 
-                        if(presion==1090) presion=1000;
-                        presion++;
+                        if(presion==1090) presion=1000;//esto es de prueba
+                        presion++;//solo aumenta el valor de la presion a lo pendejo
 
-                        min = 0;
+                        min = 0;//resetea el timer!
                 }
-                vTaskDelay(1000);
+                vTaskDelay(1000);//aguanta 1 segundo we
         }
 
 }

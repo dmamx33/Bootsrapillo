@@ -163,7 +163,7 @@ void ResetForecastData(void){
         EEPROM.write(COUNTER_SAMPLES_PRESS, 0);
         EEPROM.commit();
         for (uint8_t i = 0; i < 10; i++) {
-                EEPROM.write(START_DATA_PRESSURE + i, i);
+                EEPROM.write(START_DATA_PRESSURE + i, 0);
                 EEPROM.commit();
         }
 }
@@ -181,21 +181,13 @@ uint8_t SavedMonth(void){
 void PushPressure(int current_pressure){
 
         uint8_t pres_actual = uint8_t(current_pressure - 845);//restale 845 para qe quepa en 8 bits
-        //Serial.println("   --Current_pres "+String(current_pressure)+" - "+String(pres_actual));
         uint8_t current_index = EEPROM.read(COUNTER_SAMPLES_PRESS);//cuantos datos hay guardados, indice
-        Serial.println("   in PushPressure: --Samples: "+String(current_index));
-
         uint8_t aux=0;
-        //Serial.println(" # # # Index before if " + String(current_index));
-        if(current_index!=0)
+        if(current_index!=0)//si es la primera presiona guardar escapa
         {
-                //Serial.println(" # # # debería entrar ??");
-                for (int i =int(current_index); i>=0; i--) {
-                        // Serial.println("   EN EL PUTO CICLO FOR!!!");
-                        // Serial.print("i="+String(i));
-                        // Serial.println(" ");
+                for (int i =int(current_index); i>=0; i--) { // este ciclo recorre una posicion cada presion
                         aux = EEPROM.read( START_DATA_PRESSURE + i );
-                        if( i<9 ) {
+                        if( i<9 ) { // la posicion 10 no se debe guardar, se descarta
                                 EEPROM.write(START_DATA_PRESSURE + i + 1, aux);
                                 EEPROM.commit();
                         }
@@ -205,16 +197,13 @@ void PushPressure(int current_pressure){
         EEPROM.write(START_DATA_PRESSURE, pres_actual);//pon la presion actual en la primera posicion
         EEPROM.commit();
 
-        if (current_index>=10)
-        {
-                if(current_index>10)
-                {
+        if (current_index>=10){
+                if(current_index>10)  {
                         EEPROM.write(COUNTER_SAMPLES_PRESS, 10);//procura siempre sea 9 el numero max de datos
                         EEPROM.commit();
                 }
         }
-        else
-        {
+        else{
                 EEPROM.write(COUNTER_SAMPLES_PRESS, current_index+1);//actualiza nuevo indice
                 EEPROM.commit();
         }
