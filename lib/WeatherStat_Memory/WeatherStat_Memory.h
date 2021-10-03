@@ -11,7 +11,7 @@
  #ifndef WeatherStat_Memory_h
  #define WeatherStat_Memory_h
 
-#define START_DATA_PRESSURE (141)
+//#define START_DATA_PRESSURE (141)
 #define START_DATA_WIFI (162)
 
 char* RetrieveSSID(uint8_t anfang );

@@ -21,7 +21,7 @@ float get_CO2_measure(){
   timeHigh = pulseIn(MHZ19_PWM_PIN, HIGH, 2200000);// Alle Zeiten in Mikrosekunden
   timeLow = pulseIn(MHZ19_PWM_PIN, LOW, 2200000);
   String temp ="   Time High: " + String(timeHigh) + "  Low: " + String(timeLow);
-  Serial.println(temp);
+  //Serial.println(temp);
   unsigned long periodDuration = timeHigh + timeLow;
 
 

@@ -25,6 +25,7 @@
 #include "WeatherStat_Messages.h"
 #include "WeatherStat_CO2sensor.h"
 #include "WeatherStat_Memory.h"
+#include "WeatherStat_Zambretti.h"
 #define BSEC_MAX_STATE_BLOB_SIZE     (139)
 // #include <ESP8266WiFi.h> //Archivos originales
 // #include <ESP8266WebServer.h>
@@ -40,6 +41,8 @@ char *password = "62407078731195560963";
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600;  //Germany is GMT +1, expressed in seconds
 const int daylightOffset_sec = 3600;
+enum netmode {CONNECTED_TO_INTERNET, WIRELESS_ACCESS_POINT};
+netmode Network_status;
 int count = 0;
 String cadena_envio;
 uint8_t contador=10;
@@ -51,8 +54,10 @@ float varCo2M=400.0;
 WebServer server(80);
 TaskHandle_t Task2;
 TaskHandle_t Task1;
+TaskHandle_t Task5;
 void loop1(void *parameter);
 void loop2(void *parameter);
+void loop5(void *parameter);
 
 void handleRoot()
 {
@@ -140,18 +145,17 @@ void setup() {
         char *password = RetrievePASSW(START_DATA_WIFI);
         if(ssid && password)
         {
-          Serial.print("Red encontrada: ");
-          Serial.println(ssid);
-          Serial.print("Contraseña encontrada: ");
-          Serial.println(password);
+                Serial.print("Red encontrada: ");
+                Serial.println(ssid);
+                Serial.print("Contraseña encontrada: ");
+                Serial.println(password);
         }
         else{
-          Serial.println("Contraseña o password no encontrado");
-
-          ssid = (char*) calloc( strlen("FRITZ!Box 6591 Cable SW")+1,sizeof(char) );
-          strcpy(ssid,"FRITZ!Box 6591 Cable SW");           // replace with your SSID
-          password = (char*) calloc( strlen("62407078731195560963")+1,sizeof(char) );
-          strcpy(password, "62407078731195560963");
+                Serial.println("Contraseña o password no encontrado");
+                ssid = (char*) calloc( strlen("FRITZ!Box 6591 Cable SW")+1,sizeof(char) );
+                strcpy(ssid,"FRITZ!Box 6591 Cable SW");     // replace with your SSID
+                password = (char*) calloc( strlen("62407078731195560963")+1,sizeof(char) );
+                strcpy(password, "62407078731195560963");
         }
         delay(3000);
         WiFi.begin(ssid, password);//Apesta menos
@@ -160,15 +164,18 @@ void setup() {
                 k++;
                 delay(1000);
                 Serial.println("Connecting to WiFi..");
-                if(k == 10)  ESP.restart();
+                if(k == 10) ESP.restart();
         }
         free(ssid);
         free(password);
         // Print ESP32 Local IP Address
         Serial.println(WiFi.localIP());
+        Network_status = CONNECTED_TO_INTERNET;
         ////////////
         configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
+        SaveMonth(getMonat());
+        Serial.println("Mes guardado " + String(SavedMonth()));
+        ResetForecastData();
         server.on("/", handleRoot);
         server.on("/info", [](){
                 server.send(200, "application/json", cadena_envio);
@@ -188,21 +195,24 @@ void setup() {
         server.onNotFound(handleWebRequests);
         server.begin();
 
-        xTaskCreatePinnedToCore(loop1,"Task_1",10000,NULL,2,&Task1,0);
+        xTaskCreatePinnedToCore(loop1,"Task_1",20000,NULL,2,&Task1,0);
         delay(500);
-        xTaskCreatePinnedToCore(loop2,"Task_2",10000,NULL,1,&Task2,0);
+        xTaskCreatePinnedToCore(loop2,"Task_2",10000,NULL,1,&Task2,1);
+        delay(500);
+        xTaskCreatePinnedToCore(loop5,"Task_5",20000,NULL,1,&Task5,0);
         delay(500);
 
 }
 
 void loop(){
-  i++;
-  if(i==60){
-    minutes++;
-    i=0;}
-  yield();
-  Serial.println("---in loop() Min:" + String(minutes));
-  vTaskDelay(1000);
+        i++;
+        if(i==60) {
+                minutes++;
+                i=0;
+        }
+        yield();
+        //Serial.println("---in loop() Min:" + String(minutes));
+        vTaskDelay(1000);
 }
 
 void loop1(void *parameter) {
@@ -252,17 +262,91 @@ void loop1(void *parameter) {
 
 void loop2(void *parameter){
 
-while(true){
-    Serial.println("---in loop2 before measure");
-    yield();
-   varCo2M = get_CO2_measure();
+        while(true) {
+                //Serial.println("---in loop2 before measure");
+                yield();
+                varCo2M = get_CO2_measure();
 
-   Serial.print("---in loop2 after measure: ");
-   Serial.println(varCo2M);
-  vTaskDelay(5);
-  }
+                //Serial.print("---in loop2 after measure: ");
+                //Serial.println(varCo2M);
+                vTaskDelay(5);
+        }
 
 }
+
+void loop5(void *parameter){
+
+        int sec=0;//regresar a 59
+        int min=0;//regresar a 9
+        int monate=0;
+        int Zamb=0;
+        int presion=1000;
+        int Presiones[10];
+
+        while(1) {
+                if(sec==5)//regresar a 60
+                {
+                        sec = 0;
+                        min++;
+                }
+                else sec++;
+
+                if(min==1) ///alle 10 Minuten diesen Code ausführen
+                {
+                        //GETTING ZAMBRETTI LETTER/NUMBER
+                        // int Zamb=0;
+                        // int month=12;// MAGIC NUMBER WE NEED TO GET REAL MONTH
+                        // Zamb=calc_zambretti((P010+P09+P08)/3,(P03+P02+P01)/3, month); // Aprox average of last measurement in 30 min, and 90-120 ago.
+                        // Serial.println(Zamb);//DEBUG
+                        Serial.println("CICLO CADA 10 MINUTOS " + getZeit());
+
+                        if(Network_status==CONNECTED_TO_INTERNET)
+                                monate = getMonat();
+                        else
+                                monate = SavedMonth();
+
+                                // Serial.println(" Initial array:");
+                                // GetSavedPressures(Presiones);
+                                // for (uint8_t i = 0; i < 10; i++) {
+                                //         Serial.print(String(Presiones[i])+" ");
+                                // }
+                                // Serial.println(" ");
+
+                        PushPressure(presion);
+
+                        if(ForecastReady())
+                        {
+                                Serial.println("<<<< Forecast ready");
+                                Serial.print(String(GetNumbePress())+" - ");
+                                GetSavedPressures(Presiones);
+                                for (uint8_t i = 0; i < 10; i++) {
+                                        Serial.print(String(Presiones[i])+" ");
+                                }
+                                Serial.println(" ");
+
+                        }
+                        else
+                        {
+                                Serial.println("<<<< Forecast not ready");
+                                Serial.print(String(GetNumbePress())+" - ");
+                                GetSavedPressures(Presiones);
+                                for (uint8_t i = 0; i < 10; i++) {
+                                        Serial.print(String(Presiones[i])+" ");
+                                }
+                                Serial.println(" ");
+                        }
+                        //Zamb=calc_zambretti((P010+P09+P08)/3,(P03+P02+P01)/3, monate);
+
+                        if(presion==1090) presion=1000;
+                        presion++;
+
+                        min = 0;
+                }
+                vTaskDelay(1000);
+        }
+
+}
+
 
 // #define RELAY_ADDR 0x6D
 // #define INCORR_PARAM 0xFF
