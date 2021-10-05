@@ -161,7 +161,7 @@
 
           <div class="card-body text-dark">
             <div class="forecast">
-                Next 12H: Cloudy
+                Next 12H: <span id="forecast">
             </div>
             <div class="temp">
                <img src="https://s5.postimg.cc/yzcm7htyb/image.png" alt="" width="40">
@@ -483,6 +483,11 @@
     </div>
   </div>
   <!-- Termina carousel -->
+
+
+<input type="hidden" id="textdummy">
+<!-- <p><small class="text-muted" id="textdummy">xxx</small></p> -->
+
 
   <!-- Empieza footer -->
   <div class="container-fluid pb-0 mb-0 justify-content-center text-light ">
@@ -866,6 +871,10 @@
       }
       elem = document.querySelector('#iaq_quality');
       array[2] != 'nan' ? elem.innerHTML = array[18] : elem.innerHTML = '---------';
+      elem = document.querySelector('#forecast');
+      array[2] != 'nan' ? elem.innerHTML = array[19] : elem.innerHTML = '---------';
+      elem = document.querySelector('#textdummy');
+      array[2] != 'nan' ? elem.innerHTML = array[20] : elem.innerHTML = '---------';
       // elem = document.querySelector('#textdummy');
       // array[2] != 'nan' ? elem.innerHTML = 'D'+ array[19] : elem.innerHTML = '---------';
     });

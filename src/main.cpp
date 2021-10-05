@@ -13,7 +13,7 @@
 // #include "SparkFun_Qwiic_Relay.h"
 // #include "ArduinoJson.h"
 #include <EEPROM.h>// #include <ArduinoOTA.h>
- #include <FS.h>
+ //#include <FS.h>
  #include <SPIFFS.h>
 // #include <ESPmDNS.h>
  #include <WiFi.h>
@@ -175,7 +175,7 @@ void setup() {
         configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
         SaveMonth(getMonat());
         Serial.println("Mes guardado " + String(SavedMonth()));
-        ResetForecastData();
+        //ResetForecastData();
         server.on("/", handleRoot);
         server.on("/info", [](){
                 server.send(200, "application/json", cadena_envio);
@@ -211,7 +211,7 @@ void loop(){
                 i=0;
         }
         yield();
-        //Serial.println("---in loop() Min:" + String(minutes));
+        //Serial.println(cadena_envio);
         vTaskDelay(1000);
 }
 
@@ -225,30 +225,32 @@ void loop1(void *parameter) {
                         //return (String)"[\"" + temp + "\",\"" + hum + "\",\"" + sealevel + "\"]";
                         // cadena_envio = "[\"" + String(contador) + "\",\"" + String(contador*2) + "\",\"" + String(contador*3)+ "\"]";
                         cadena_envio = StartJS;//Initializer JSON chain
-                        cadena_envio += String(contador) + SpacerJS;//temp
-                        cadena_envio += String(contador*2) + SpacerJS;//pres
-                        cadena_envio += String(contador*3) + SpacerJS;//hum
-                        cadena_envio += getDatum(IN_LETTERS)+" "+ getZeit()+ SpacerJS;//fecha
-                        cadena_envio += messages_runin_stat[1] +SpacerJS;//status
+                        cadena_envio += String(contador) + SpacerJS;//temp//0
+                        cadena_envio += String(contador*2) + SpacerJS;//pres//1
+                        cadena_envio += String(contador*3) + SpacerJS;//hum//2
+                        cadena_envio += getDatum(IN_LETTERS)+" "+ getZeit()+ SpacerJS;//fecha//3
+                        cadena_envio += messages_runin_stat[1] +SpacerJS;//status//4
                         dummyco2 = random(1,1000);
-                        cadena_envio += String(varCo2M ) + SpacerJS; //co2 mess
-                        cadena_envio += String(dummyco2-random(10,50)) + SpacerJS; //co2 stimation
+                        cadena_envio += String(varCo2M ) + SpacerJS; //co2 mess//5
+                        cadena_envio += String(dummyco2-random(10,50)) + SpacerJS; //co2 stimation//6
                         int dummyaccuracy = random(1,4);
-                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS; //co2 stimation accuracy
-                        cadena_envio += "info o medidas a tomar" + SpacerJS; //co2 suggested acti
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS; //co2 stimation accuracy//7
+                        cadena_envio += "info o medidas a tomar" + SpacerJS; //co2 suggested acti//8
                         dummybreathvoc = random(1,200);
-                        cadena_envio += String(dummybreathvoc) + SpacerJS;//breath VOC
-                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//breath VOC accuracy
-                        cadena_envio += String(random(1,100)) + SpacerJS;//Gas percentage
-                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//Gas percentage accuracy
+                        cadena_envio += String(dummybreathvoc) + SpacerJS;//breath VOC//9
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//breath VOC accuracy//10
+                        cadena_envio += String(random(1,100)) + SpacerJS;//Gas percentage//11
+                        cadena_envio += messages_accuracy[dummyaccuracy] + SpacerJS;//Gas percentage accuracy//12
                         dummyiaq = random(0,500);
-                        cadena_envio += String(dummyiaq)+ SpacerJS;//IAQ
-                        cadena_envio += messages_accuracy[dummyaccuracy]+ SpacerJS;//IAQ Accuracy
-                        cadena_envio += messages_impact[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Impact
-                        cadena_envio += messages_saction[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Suggested actions
-                        cadena_envio += messages_iaqcolors[iaq_Index2Level(dummyiaq)]+ SpacerJS;
+                        cadena_envio += String(dummyiaq)+ SpacerJS;//IAQ//13
+                        cadena_envio += messages_accuracy[dummyaccuracy]+ SpacerJS;//IAQ Accuracy//14
+                        cadena_envio += messages_impact[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Impact//15
+                        cadena_envio += messages_saction[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Suggested actions//16
+                        cadena_envio += messages_iaqcolors[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ Color//17
+                        cadena_envio += messages_quality[iaq_Index2Level(dummyiaq)]+ SpacerJS;//IAQ quality //18
                         //cadena_envio += "whatsgoingon" + SpacerJS;
-                        cadena_envio += messages_quality[iaq_Index2Level(dummyiaq)];//+ SpacerJS;
+                        cadena_envio += weather_forecast[random(1,27)]+ SpacerJS;//Forecast//19
+                        cadena_envio += "holo";//por si acaso//20
                         // cadena_envio += "oh_no_me_da_amsiedad";
                         cadena_envio += StopJS;//Finalizer JSON chain
                         //long sdf=random(1,500);
@@ -276,22 +278,22 @@ void loop2(void *parameter){
 
 void loop5(void *parameter){
 
-        int sec=0;//regresar a 59
-        int min=0;//regresar a 9
+        int sec=59;//regresar a 59
+        int min=9;//regresar a 9
         int monate=0;
         int Zamb=0;
         int presion=1000;
         int Presiones[10];
 
         while(1) {
-                if(sec==5)//regresar a 60
+                if(sec==60)//regresar a 60
                 {
                         sec = 0;
                         min++;
                 }
                 else sec++;
 
-                if(min==1) ///cambiar aqui, poner 10 (minutos)
+                if(min==10) ///cambiar aqui, poner 10 (minutos)
                 {
 
                         Serial.println("CICLO CADA 10 MINUTOS " + getZeit());
